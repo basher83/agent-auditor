@@ -227,3 +227,4 @@ mise.local.toml
 
 .rumdl-cache
 .lycheecache
+.claude/settings.local.json
