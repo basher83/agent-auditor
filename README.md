@@ -57,9 +57,6 @@ agent-auditor/
 
 ```bash
 # Install from source
-pip install -e .
-
-# Or using uv
 uv pip install -e .
 ```
 
