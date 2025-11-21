@@ -220,6 +220,7 @@ Thumbs.db
 
 # Lychee
 .lychee-report.md
+.lycheecache/
 
 # Mise
 mise.local.toml
