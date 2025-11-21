@@ -31,12 +31,99 @@ MIN_QUOTED_PHRASES = 3  # Minimum for concrete, actionable triggers
 MIN_DOMAIN_INDICATORS = 3  # Minimum for domain-focused description
 
 
-async def audit_skill(skill_path: Path):
+def validate_and_format_deterministic(metrics: dict) -> tuple[str, bool]:
     """
-    Audit a skill using deterministic Python extraction + Claude analysis.
+    Validate metrics and format deterministic output.
+
+    Args:
+        metrics: Extracted skill metrics
+
+    Returns:
+        Tuple of (formatted_output, has_blockers)
+    """
+    blockers = []
+    warnings = []
+
+    # B1: No forbidden files
+    if metrics["forbidden_files"]:
+        blockers.append(f"B1: Forbidden files detected: {', '.join(metrics['forbidden_files'])}")
+
+    # B2: Valid YAML frontmatter
+    if not (metrics["yaml_delimiters"] == 2 and metrics["has_name"] and metrics["has_description"]):
+        issues = []
+        if metrics["yaml_delimiters"] != 2:
+            issues.append(f"expected 2 yaml delimiters, found {metrics['yaml_delimiters']}")
+        if not metrics["has_name"]:
+            issues.append("missing 'name' field")
+        if not metrics["has_description"]:
+            issues.append("missing 'description' field")
+        blockers.append(f"B2: Invalid YAML frontmatter ({', '.join(issues)})")
+
+    # B3: Line count under 500
+    if metrics["line_count"] >= MAX_SKILL_LINE_COUNT:
+        blockers.append(
+            f"B3: SKILL.md too long ({metrics['line_count']} lines, limit is {MAX_SKILL_LINE_COUNT})"
+        )
+
+    # B4: No implementation details
+    if metrics["implementation_details"]:
+        details = metrics["implementation_details"][:5]  # Show first 5
+        more = (
+            f" (and {len(metrics['implementation_details']) - 5} more)"
+            if len(metrics["implementation_details"]) > 5
+            else ""
+        )
+        blockers.append(f"B4: Implementation details in description: {details}{more}")
+
+    # W1: Quoted phrase count
+    if metrics["quoted_count"] < MIN_QUOTED_PHRASES:
+        warnings.append(
+            f"W1: Only {metrics['quoted_count']} quoted phrases (need {MIN_QUOTED_PHRASES}+)"
+        )
+
+    # W3: Domain indicator count
+    if metrics["domain_count"] < MIN_DOMAIN_INDICATORS:
+        warnings.append(
+            f"W3: Only {metrics['domain_count']} domain indicators (need {MIN_DOMAIN_INDICATORS}+)"
+        )
+
+    # Format output
+    output_lines = []
+
+    # Status line
+    if blockers:
+        output_lines.append("\n🔴 BLOCKED")
+    elif warnings:
+        output_lines.append("\n🟡 READY WITH WARNINGS")
+    else:
+        output_lines.append("\n🟢 READY")
+
+    # Blockers section
+    if blockers:
+        output_lines.append("\n❌ BLOCKERS:")
+        for b in blockers:
+            output_lines.append(f"  {b}")
+
+    # Warnings section
+    if warnings:
+        output_lines.append("\n⚠️  WARNINGS:")
+        for w in warnings:
+            output_lines.append(f"  {w}")
+
+    # Next steps
+    if blockers or warnings:
+        output_lines.append("\n💡 TIP: Run with --explain for detailed fix suggestions")
+
+    return "\n".join(output_lines), bool(blockers)
+
+
+async def audit_skill(skill_path: Path, use_claude: bool = False):
+    """
+    Audit a skill using deterministic Python extraction + optional Claude analysis.
 
     Args:
         skill_path: Path to skill directory
+        use_claude: If True, use Claude for detailed explanations. If False, show deterministic results only.
     """
     print(f"🔍 Auditing skill: {skill_path}")
     print("=" * 60)
@@ -80,7 +167,18 @@ async def audit_skill(skill_path: Path):
     print(f"   - Domain indicators: {metrics['domain_count']}")
     print(f"   - Line count: {metrics['line_count']}")
 
-    # Step 2: Configure SDK with NO tools (analysis only)
+    # Step 2: Validate and output results
+    if not use_claude:
+        # Fast mode: Deterministic output only
+        print("\n📊 Running deterministic validation...")
+        output, has_blockers = validate_and_format_deterministic(metrics)
+        print(output)
+        return
+
+    # Step 3: Claude-enhanced mode (--explain flag)
+    print("\n🤖 Using Claude for detailed analysis...")
+
+    # Step 4: Configure SDK with NO tools (analysis only)
     options = ClaudeAgentOptions(
         allowed_tools=[],  # NO TOOLS - prevents hallucination
         model="claude-sonnet-4-5",
@@ -207,11 +305,21 @@ IMPORTANT: Base your analysis ONLY on the metrics provided above. Do not re-extr
 
 async def main():
     """Main entry point."""
-    if len(sys.argv) != 2:
-        print("Usage: python -m skill_auditor.cli /path/to/skill/directory")
-        sys.exit(1)
+    import argparse
 
-    skill_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        description="Audit Claude Code skills for compliance and effectiveness"
+    )
+    parser.add_argument("skill_path", type=Path, help="Path to skill directory containing SKILL.md")
+    parser.add_argument(
+        "--explain",
+        action="store_true",
+        help="Use Claude to provide detailed explanations and fix suggestions (costs ~$0.004)",
+    )
+
+    args = parser.parse_args()
+    skill_path = args.skill_path
+    use_claude = args.explain
 
     # Resolve to absolute path
     try:
@@ -240,7 +348,7 @@ async def main():
         print("   Please check directory permissions and try again.")
         sys.exit(1)
 
-    await audit_skill(skill_path)
+    await audit_skill(skill_path, use_claude=use_claude)
 
 
 def _main():
