@@ -34,6 +34,6 @@ def validate_metrics_structure(metrics: dict[str, Any]) -> None:
 
     if missing_keys:
         raise ValueError(
-            f"Metrics extraction incomplete. Missing required keys: "
-            f"{', '.join(missing_keys)}. This is likely a bug in metrics_extractor."
+            "Metrics extraction incomplete. Missing required keys: "
+            + f"{', '.join(missing_keys)}. This is likely a bug in metrics_extractor."
         )

@@ -27,13 +27,10 @@ def check_b4_implementation_details(description: str) -> list[str]:
     impl_patterns = [
         # File extensions
         r"\w+\.(?:yaml|json|jsx|tsx|yml|csv|sql|txt|env|md|py|sh|js|ts)",
-
         # Command paths
         r"/[a-z-]+:[a-z-]+",
-
         # Architecture patterns
         r"\b\w+-(?:tier|layer|phase|step|stage)\b",
-
         # Common tools/libraries (curated list)
         r"\b(?:firecrawl|pdfplumber|pandas|numpy|tensorflow|scikit-learn)\b",
         r"\b(?:docker|kubernetes|postgresql|mysql|mongodb|redis|elasticsearch)\b",
@@ -66,17 +63,17 @@ def extract_skill_metrics(skill_path: Path) -> dict[str, Any]:
     except PermissionError as e:
         raise PermissionError(
             f"Permission denied when reading {skill_md}. "
-            f"Please check file permissions and try again."
+            + "Please check file permissions and try again."
         ) from e
     except UnicodeDecodeError as e:
         raise ValueError(
             f"Unable to read {skill_md} due to encoding issues. "
-            f"Please ensure the file is UTF-8 encoded. Error: {e}"
+            + f"Please ensure the file is UTF-8 encoded. Error: {e}"
         ) from e
     except OSError as e:
         raise OSError(
             f"I/O error when reading {skill_md}: {e}. "
-            f"Please check that the file is accessible and try again."
+            + "Please check that the file is accessible and try again."
         ) from e
 
     # Extract YAML frontmatter fields
@@ -86,6 +83,7 @@ def extract_skill_metrics(skill_path: Path) -> dict[str, Any]:
     # Extract description (handles both multiline '>' and single-line formats)
     # Try multiline format first
     desc_match = re.search(r"description:\s*>\s*(.*?)^---", content, re.MULTILINE | re.DOTALL)
+    simple_match = None
     if desc_match:
         description = desc_match.group(1).strip()
     else:

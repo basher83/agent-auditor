@@ -224,9 +224,7 @@ async def main():
     if not skill_path.exists():
         print(f"❌ Error: Path does not exist: {skill_path}")
         print("   Please provide a valid path to a skill directory.")
-        print(
-            "   Example: python -m skill_auditor.cli /path/to/skill/directory"
-        )
+        print("   Example: python -m skill_auditor.cli /path/to/skill/directory")
         sys.exit(1)
 
     if not skill_path.is_dir():

@@ -47,8 +47,9 @@ def test_b4_catches_file_extensions() -> None:
 
     for description, expected_violations in cases:
         result = check_b4_implementation_details(description)
-        assert set(result) == set(expected_violations), \
+        assert set(result) == set(expected_violations), (
             f"Expected {expected_violations}, got {result} for: {description}"
+        )
 
 
 def test_b4_catches_command_paths() -> None:
@@ -62,8 +63,9 @@ def test_b4_catches_command_paths() -> None:
 
     for description, expected_violations in cases:
         result = check_b4_implementation_details(description)
-        assert set(result) == set(expected_violations), \
+        assert set(result) == set(expected_violations), (
             f"Expected {expected_violations}, got {result} for: {description}"
+        )
 
 
 def test_b4_catches_architecture_patterns() -> None:
@@ -77,8 +79,9 @@ def test_b4_catches_architecture_patterns() -> None:
 
     for description, expected_violations in cases:
         result = check_b4_implementation_details(description)
-        assert set(result) == set(expected_violations), \
+        assert set(result) == set(expected_violations), (
             f"Expected {expected_violations}, got {result} for: {description}"
+        )
 
 
 def test_b4_catches_tool_names() -> None:
@@ -92,8 +95,9 @@ def test_b4_catches_tool_names() -> None:
 
     for description, expected_violations in cases:
         result = check_b4_implementation_details(description)
-        assert set(result) == set(expected_violations), \
+        assert set(result) == set(expected_violations), (
             f"Expected {expected_violations}, got {result} for: {description}"
+        )
 
 
 def test_b4_allows_conceptual_terms() -> None:
