@@ -182,9 +182,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  and can be added to the global gitignore or merged into this file. However, if you prefer,
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
@@ -193,6 +193,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
 
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
@@ -205,3 +210,18 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MCP
+.mcp.json
+
+# Lychee
+.lychee-report.md
+
+# Mise
+mise.local.toml
+
+.rumdl-cache
