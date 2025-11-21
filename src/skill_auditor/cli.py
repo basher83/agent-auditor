@@ -26,9 +26,7 @@ from .metrics_extractor import extract_skill_metrics
 from .validation import validate_metrics_structure
 
 # Audit thresholds
-MAX_SKILL_LINE_COUNT = 500  # Official Claude Code skill specification limit
-MIN_QUOTED_PHRASES = 3  # Minimum for concrete, actionable triggers
-MIN_DOMAIN_INDICATORS = 3  # Minimum for domain-focused description
+MAX_SKILL_LINE_COUNT = 500  # Official Claude Code skill specification (soft recommendation)
 
 
 def validate_and_format_deterministic(metrics: dict) -> tuple[str, bool]:
@@ -59,33 +57,20 @@ def validate_and_format_deterministic(metrics: dict) -> tuple[str, bool]:
             issues.append("missing 'description' field")
         blockers.append(f"B2: Invalid YAML frontmatter ({', '.join(issues)})")
 
-    # B3: Line count under 500
+    # W1: Line count under 500 (soft recommendation, not blocker)
     if metrics["line_count"] >= MAX_SKILL_LINE_COUNT:
-        blockers.append(
-            f"B3: SKILL.md too long ({metrics['line_count']} lines, limit is {MAX_SKILL_LINE_COUNT})"
-        )
-
-    # B4: No implementation details
-    if metrics["implementation_details"]:
-        details = metrics["implementation_details"][:5]  # Show first 5
-        more = (
-            f" (and {len(metrics['implementation_details']) - 5} more)"
-            if len(metrics["implementation_details"]) > 5
-            else ""
-        )
-        blockers.append(f"B4: Implementation details in description: {details}{more}")
-
-    # W1: Quoted phrase count
-    if metrics["quoted_count"] < MIN_QUOTED_PHRASES:
         warnings.append(
-            f"W1: Only {metrics['quoted_count']} quoted phrases (need {MIN_QUOTED_PHRASES}+)"
+            f"W1: SKILL.md is long ({metrics['line_count']} lines, recommended max {MAX_SKILL_LINE_COUNT})"
         )
 
-    # W3: Domain indicator count
-    if metrics["domain_count"] < MIN_DOMAIN_INDICATORS:
-        warnings.append(
-            f"W3: Only {metrics['domain_count']} domain indicators (need {MIN_DOMAIN_INDICATORS}+)"
-        )
+    # NOTE: W1 (quoted phrases) and W3 (domain indicators) removed
+    # These were not actual requirements per official Anthropic documentation
+    # Tested against 69 real skills including official Anthropic examples
+    # 78% and 88% false positive rates respectively
+
+    # NOTE: B4 (implementation details) removed
+    # Official Anthropic skills include implementation details in descriptions
+    # The requirement is "be specific" not "avoid details"
 
     # Format output
     output_lines = []
@@ -163,9 +148,9 @@ async def audit_skill(skill_path: Path, use_claude: bool = False):
         return
 
     print(f"✅ Extracted {len(metrics)} metrics")
-    print(f"   - Quoted phrases: {metrics['quoted_count']}")
-    print(f"   - Domain indicators: {metrics['domain_count']}")
     print(f"   - Line count: {metrics['line_count']}")
+    print(f"   - YAML delimiters: {metrics['yaml_delimiters']}")
+    print(f"   - Forbidden files: {len(metrics['forbidden_files'])}")
 
     # Step 2: Validate and output results
     if not use_claude:
@@ -245,11 +230,7 @@ def build_analysis_prompt(metrics: dict) -> str:
     # Calculate binary check results
     b1_pass = len(metrics["forbidden_files"]) == 0
     b2_pass = metrics["yaml_delimiters"] == 2 and metrics["has_name"] and metrics["has_description"]
-    b3_pass = metrics["line_count"] < MAX_SKILL_LINE_COUNT
-    b4_pass = len(metrics["implementation_details"]) == 0
-
-    w1_pass = metrics["quoted_count"] >= MIN_QUOTED_PHRASES
-    w3_pass = metrics["domain_count"] >= MIN_DOMAIN_INDICATORS
+    w1_pass = metrics["line_count"] < MAX_SKILL_LINE_COUNT
 
     prompt = f"""Audit the following skill metrics:
 
@@ -261,15 +242,12 @@ def build_analysis_prompt(metrics: dict) -> str:
 
 ## Binary Check Results
 
-**BLOCKERS (Official Requirements):**
-- B1: No forbidden files → {"✅ PASS" if b1_pass else "❌ FAIL"}
-- B2: Valid YAML frontmatter → {"✅ PASS" if b2_pass else "❌ FAIL"}
-- B3: SKILL.md under 500 lines → {"✅ PASS" if b3_pass else "❌ FAIL"}
-- B4: No implementation details in description → {"✅ PASS" if b4_pass else "❌ FAIL"}
+**BLOCKERS (Official Requirements from Anthropic Documentation):**
+- B1: No forbidden files (README.md, INSTALL.md) → {"✅ PASS" if b1_pass else "❌ FAIL"}
+- B2: Valid YAML frontmatter with name + description → {"✅ PASS" if b2_pass else "❌ FAIL"}
 
-**WARNINGS (Effectiveness):**
-- W1: ≥3 quoted phrases → {"✅ PASS" if w1_pass else "❌ FAIL"}
-- W3: ≥3 domain indicators → {"✅ PASS" if w3_pass else "❌ FAIL"}
+**WARNINGS (Soft Recommendations):**
+- W1: SKILL.md under 500 lines → {"✅ PASS" if w1_pass else "❌ FAIL"}
 
 ## Your Task
 

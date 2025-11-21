@@ -119,8 +119,21 @@ def extract_skill_metrics(skill_path: Path) -> dict[str, Any]:
     line_count = len(content.split("\n"))
 
     # Check for YAML frontmatter (B2)
+    # Fixed: Only count frontmatter delimiters, not code block delimiters
     has_frontmatter = content.startswith("---")
-    yaml_delimiters = len(re.findall(r"^---$", content, re.MULTILINE))
+
+    # Find frontmatter section only (between first --- and next ---)
+    frontmatter_match = re.match(r"^---\s*\n(.*?)\n---", content, re.DOTALL)
+    if frontmatter_match:
+        # Valid frontmatter found (opening and closing delimiters)
+        yaml_delimiters = 2
+    elif has_frontmatter:
+        # Has opening delimiter but no closing one
+        yaml_delimiters = 1
+    else:
+        # No frontmatter at all
+        yaml_delimiters = 0
+
     has_name = name_match is not None
     has_description = desc_match is not None or simple_match is not None
 
