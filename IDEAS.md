@@ -1,6 +1,23 @@
 # Ideas
 
-Future enhancements and features under consideration. No timelines or commitments - just possibilities.
+Future enhancements and features under consideration. No timelines or commitments—just possibilities.
+
+## Universal Validation Framework
+
+Extend the extract/validate/enhance pattern to other Claude Code artifacts.
+
+**Command Auditor**: Validate `/commands:name` definitions for dangerous operations, parameter
+validation, error handling, and idempotency.
+
+**Agent Auditor**: Validate subagent configurations for tool access boundaries, iteration limits,
+delegation patterns, and permission escalation risks.
+
+**Unified CLI**: Auto-detect artifact types and apply appropriate validation rules.
+
+**Use case**: One tool validates all Claude Code artifacts—skills, commands, agents, workflows,
+policies—with consistent quality standards.
+
+---
 
 ## Validation Enhancements
 
@@ -16,8 +33,8 @@ patterns:
   - demo-*.md
 ```
 
-**Use case**: Skill descriptions that reference example filenames like "processes
-files like `example.py`" would not trigger B4.
+**Use case**: Skill descriptions that reference example filenames like "processes files like
+`example.py`" do not trigger B4.
 
 ### Custom Check Plugins
 
@@ -38,7 +55,7 @@ def check_team_style(metrics: dict) -> dict:
 
 ### Parallel Skill Auditing
 
-Batch mode for auditing multiple skills simultaneously.
+Audit multiple skills simultaneously in batch mode.
 
 ```bash
 skill-auditor --batch .claude/skills/*/

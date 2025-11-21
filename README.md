@@ -2,6 +2,8 @@
 
 Audits Claude Code skills, agents, and components for compliance and effectiveness.
 
+**Status**: v1.0-ready. The skill auditor is production-ready for immediate use.
+
 ## Overview
 
 Validates Claude Code skills against official Anthropic specifications.
