@@ -62,25 +62,99 @@ uv pip install -e .
 
 ### Usage
 
-```bash
-# Audit a skill using the CLI
-python -m skill_auditor.cli /path/to/skill/directory
+The skill auditor runs in two modes:
 
-# Or using the console script (after installation)
+**Fast Mode (Default)** - Deterministic validation only:
+
+```bash
+# Using module
+uv run python -m skill_auditor.cli /path/to/skill/directory
+
+# Or using console script (after installation)
 skill-auditor /path/to/skill/directory
 ```
 
-### Example
+**Explain Mode** - Claude-powered detailed analysis and fix suggestions:
 
 ```bash
-python -m skill_auditor.cli /path/to/skill/directory
+# Add --explain flag for AI-powered explanations
+uv run python -m skill_auditor.cli /path/to/skill/directory --explain
+
+# Or with console script
+skill-auditor /path/to/skill/directory --explain
+```
+
+### Examples
+
+**Fast Mode** (instant, free):
+
+```bash
+$ uv run python -m skill_auditor.cli .claude/skills/my-skill
+
+🔍 Auditing skill: .claude/skills/my-skill
+============================================================
+
+📊 Extracting metrics...
+✅ Extracted 14 metrics
+   - Quoted phrases: 2
+   - Domain indicators: 4
+   - Line count: 450
+
+📊 Running deterministic validation...
+
+🔴 BLOCKED
+
+❌ BLOCKERS:
+  B4: Implementation details in description: ['script.py', 'docker']
+
+⚠️  WARNINGS:
+  W1: Only 2 quoted phrases (need 3+)
+
+💡 TIP: Run with --explain for detailed fix suggestions
+```
+
+**Explain Mode** (~2-3s, ~$0.004):
+
+```bash
+$ uv run python -m skill_auditor.cli .claude/skills/my-skill --explain
+
+🔍 Auditing skill: .claude/skills/my-skill
+============================================================
+
+📊 Extracting metrics...
+✅ Extracted 14 metrics
+
+🤖 Using Claude for detailed analysis...
+
+# Skill Audit Report: my-skill
+
+**Status:** 🔴 BLOCKED
+
+[Detailed explanations and fix suggestions from Claude...]
 ```
 
 ## Key Concepts
 
 - **Deterministic Auditing**: Python-based extraction ensures consistent results across runs
+- **Dual-Mode Operation**: Fast deterministic validation (default) or AI-powered explanations (--explain)
 - **Effectiveness Validation**: Checks not just compliance but also auto-invocation potential
 - **Progressive Disclosure**: Validates skills follow correct information architecture patterns
+
+## Architecture
+
+The auditor uses a two-tier architecture:
+
+1. **Deterministic Layer (Python)** - Always runs:
+   - Extracts metrics (quoted phrases, domain indicators, line count, etc.)
+   - Validates against official requirements (B1-B4)
+   - Checks effectiveness criteria (W1, W3)
+   - Fast, free, reproducible
+
+2. **Semantic Layer (Claude)** - Optional with `--explain`:
+   - Provides human-friendly explanations
+   - Suggests specific fixes
+   - Adds context and recommendations
+   - Costs ~$0.004 per audit, takes 2-3 seconds
 
 ## Origin
 
